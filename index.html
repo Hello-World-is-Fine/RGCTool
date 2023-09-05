@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap" rel="stylesheet">
+<style>
+h1,h2,h3, p, div, button {font-family: 'Noto Sans TC', sans-serif;}
+</style>
+<style>
+body {font-family: Arial;}
+
+/* Style the tab */
+.tab {
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+  background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+  background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
+
+/* Style the close button */
+.topright {
+  float: right;
+  cursor: pointer;
+  font-size: 28px;
+}
+
+.topright:hover {color: red;}
+</style>
+</head>
+<body>
+
+<h2>RGC 小工具</h2>
+<h3>點擊以下功能以開始</h3>
+<p></p>
+
+<div class="tab">
+  <button class="tablinks" onclick="openCity(event, 'London')" id="defaultOpen">改 file name .bat</button>
+  <button class="tablinks" onclick="openCity(event, 'Paris')">Search Reviewers(正選)</button>
+  <button class="tablinks" onclick="openCity(event, 'Tokyo')">Search Reviewers(反選)</button>
+</div>
+<!----------------------------------------------------------------------------------------------->
+<div id="London" class="tabcontent">
+<span onclick="this.parentElement.style.display='none'" class="topright">&times</span>
+<a href="readmeBat.html" target="_blank">使用說明</a>
+
+  <h3>CSV File Renamer</h3>
+  
+  <p>Step 1: Choose a csv file<br>
+  <input type="file" id="csvFileInput" accept=".csv"> </p>
+<br>
+  <p>Step 2: Click this button, then copy the "rename_files.bat" at "Download", <br>	
+  <button onclick="processCSV()">Process CSV</button></p>
+
+  <script>
+    function processCSV() {
+      var fileInput = document.getElementById('csvFileInput');
+      var file = fileInput.files[0];
+
+      if (file) {
+        var reader = new FileReader();
+
+        reader.onload = function (event) {
+          var csvData = event.target.result;
+          var lines = csvData.split('\n');
+          var batchScript = '';
+
+          for (var i = 1; i < lines.length; i++) {
+            var line = lines[i].trim();
+
+            if (line !== '') {
+              var values = line.split(',');
+              var oldName = values[0].trim();
+              var newName = values[1].trim();
+
+              batchScript += 'ren "' + oldName + '" "' + newName + '"\r\n';
+            }
+          }
+
+          // Create a download link for the batch script
+          var downloadLink = document.createElement('a');
+          downloadLink.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(batchScript);
+          downloadLink.download = 'rename_files.bat';
+          downloadLink.style.display = 'none';
+
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+        };
+
+        reader.readAsText(file);
+      } else {
+        console.log('No file selected.');
+      }
+    }
+  </script>
+
+</div>
+<!----------------------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------------------->
+<div id="Paris" class="tabcontent">
+<span onclick="this.parentElement.style.display='none'" class="topright">&times</span>
+<a href="readmeSearch.html" target="_blank">使用說明</a>
+
+  <h3>Search Reviewers(正選)</h3>
+  <p>Please choose a .csv file (reviewer database)<br>
+  <input type="file" id="csvFile" accept=".csv" /></p>
+  <br />
+  <p>Enter keywords, each keyword with 1 space (eg.: keyword1 keyword2 ) no keywords limited<br>
+  <input type="text" id="searchInput" placeholder="Enter search words" />
+  <button onclick="searchObject()">Search</button></p>
+  <br />
+  <div id="tableContainer"></div>
+  <br />
+  <pre id="result"></pre>
+
+  <script>
+  // Function to parse CSV data into an array of objects
+function parseCSV(csvData) {
+  const lines = csvData.split("\n");
+  const headers = lines[0].split(",");
+  const result = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const obj = {};
+    const currentLine = lines[i].split(",");
+
+    for (let j = 0; j < headers.length; j++) {
+      obj[headers[j]] = currentLine[j];
+    }
+
+    result.push(obj);
+  }
+
+  return result;
+}
+// Function to search the object
+function searchObject() {
+  const fileInput = document.getElementById("csvFile");
+  const searchInput = document.getElementById("searchInput");
+  const resultOutput = document.getElementById("result");
+
+  const file = fileInput.files[0];
+  const searchWords = searchInput.value.trim().split(" ");
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const csvData = e.target.result;
+    const data = parseCSV(csvData);
+
+    const matches = [];
+    for (const obj of data) {
+      let found = false;
+      for (const word of searchWords) {
+	  console.log(word);
+        let objValues = Object.values(obj).join(" ").toLowerCase();
+        if (objValues.includes(word.toLowerCase())) {
+          found = true;
+          break;
+        }
+      }
+      if (found) {
+        matches.push(obj);
+      }
+    }
+
+    if (matches.length > 0) {
+	
+// Generate the HTML table from the object and append it to the container
+generateTableFromObject(matches);
+
+      console.log(matches);
+	 // resultOutput.textContent = JSON.stringify(matches, null, 2);
+    } else {
+      resultOutput.textContent = "No matching objects found.";
+    }
+  };
+
+  reader.readAsText(file);
+}
+
+
+// Function to generate HTML table from object
+function generateTableFromObject(obj) {
+  // Get the table element from the HTML document
+const table = document.createElement('table');
+var container = document.getElementById("tableContainer");
+
+// Create a header row for the table
+//const headerRow = table.insertRow();
+//for (const key in obj) {
+ // const headerCell = document.createElement('th');
+ // headerCell.textContent = key;
+//  headerRow.appendChild(headerCell);
+//}
+
+// Iterate over the object and create rows for the table
+for (const key in obj) {
+  const row = table.insertRow();
+  const rowData = obj[key];
+
+  // Iterate over the properties of each object and create cells for the row
+  for (const prop in rowData) {
+    const cell = row.insertCell();
+    cell.textContent = rowData[prop];
+  }
+}
+
+// Append the table to the HTML document
+
+document.getElementById("tableContainer").appendChild(table);
+}
+
+
+
+  </script>
+
+</div>
+<!----------------------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------------------->
+<div id="Tokyo" class="tabcontent">
+<span onclick="this.parentElement.style.display='none'" class="topright">&times</span>
+<a href="readmeSearch2.html" target="_blank">使用說明</a>
+
+  <h3>Search Reviewers(反選)</h3>
+  <p>Please choose a .csv file (reviewer database)<br>
+  <input type="file" id="csvFile2" accept=".csv" /></p>
+  <br />
+  <p>Enter keywords, each keyword with 1 space (eg.: keyword1 keyword2 ) no keywords limited<br>
+  <input type="text" id="searchInput2" placeholder="Enter search words" />
+  <button onclick="searchObject2()">Search</button></p>
+  <br />
+  <div id="tableContainer2"></div>
+  <br />
+  <pre id="result2"></pre>
+
+  <script>
+  // Function to parse CSV data into an array of objects
+function parseCSV2(csvData) {
+  const lines = csvData.split("\n");
+  const headers = lines[0].split(",");
+  const result = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const obj = {};
+    const currentLine = lines[i].split(",");
+
+    for (let j = 0; j < headers.length; j++) {
+      obj[headers[j]] = currentLine[j];
+    }
+
+    result.push(obj);
+  }
+
+  return result;
+}
+// Function to search the object
+function searchObject2() {
+  const fileInput = document.getElementById("csvFile2");
+  const searchInput = document.getElementById("searchInput2");
+  const resultOutput = document.getElementById("result2");
+
+  const file = fileInput.files[0];
+  const searchWords = searchInput.value.trim().split(" ");
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const csvData = e.target.result;
+    const data = parseCSV(csvData);
+
+    const matches = [];
+    for (const obj of data) {
+      let found = true;
+      for (const word of searchWords) {
+	  console.log(word);
+        let objValues = Object.values(obj).join(" ").toLowerCase();
+        if (objValues.includes(word.toLowerCase())) {
+          found = false;
+          break;
+        }
+      }
+      if (found) {
+        matches.push(obj);
+      }
+    }
+
+    if (matches.length > 0) {
+	
+// Generate the HTML table from the object and append it to the container
+generateTableFromObject2(matches);
+
+     // console.log(matches);
+	 // resultOutput.textContent = JSON.stringify(matches, null, 2);
+    } else {
+      resultOutput.textContent = "No matching objects found.";
+    }
+  };
+
+  reader.readAsText(file);
+}
+
+
+// Function to generate HTML table from object
+function generateTableFromObject2(obj) {
+  // Get the table element from the HTML document
+const table = document.createElement('table');
+var container = document.getElementById("tableContainer2");
+
+// Create a header row for the table
+//const headerRow = table.insertRow();
+//for (const key in obj) {
+ // const headerCell = document.createElement('th');
+ // headerCell.textContent = key;
+//  headerRow.appendChild(headerCell);
+//}
+
+// Iterate over the object and create rows for the table
+for (const key in obj) {
+  const row = table.insertRow();
+  const rowData = obj[key];
+
+  // Iterate over the properties of each object and create cells for the row
+  for (const prop in rowData) {
+    const cell = row.insertCell();
+    cell.textContent = rowData[prop];
+  }
+}
+
+// Append the table to the HTML document
+
+document.getElementById("tableContainer2").appendChild(table);
+}
+
+
+
+  </script>
+</div>
+<!----------------------------------------------------------------------------------------------->
+<script>
+function openCity(evt, cityName) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("tablinks");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(cityName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+
+// Get the element with id="defaultOpen" and click on it
+//document.getElementById("defaultOpen").click();
+</script>
+   
+</body>
+</html> 
